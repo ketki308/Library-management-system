@@ -45,7 +45,7 @@ public class Books_Available extends javax.swing.JFrame {
 
             },
             new String [] {
-                "BOOK ID ", "CATEGORY", "NAME", "AUTHOR", "COPIES"
+                "BOOK ID ", "CATEGORY", "NAME", "AUTHOR", "COPIES", "AVAILABLE"
             }
         ));
         jScrollPane1.setViewportView(jTable1);
@@ -96,7 +96,7 @@ public class Books_Available extends javax.swing.JFrame {
         DefaultTableModel model=(DefaultTableModel)jTable1.getModel();
         try{
             Connection conn = DBConnection.getConnection();
-            String query="select * from Books";
+            String query="select * from Bookstable";
             PreparedStatement pst = conn.prepareStatement(query);
             ResultSet rs = pst.executeQuery();
 
@@ -105,8 +105,9 @@ public class Books_Available extends javax.swing.JFrame {
                 String category=rs.getString("CATEGORY");
                 String name=rs.getString("NAME");
                 String author=rs.getString("AUTHOR");
-                int copies=rs.getInt("COPIES");
-                model.addRow(new Object[]{bookid,category,name,author,copies});
+                int copies=rs.getInt("TOTAL_COPIES");
+                int available=rs.getInt("AVAILABLE_COPIES");
+                model.addRow(new Object[]{bookid,category,name,author,copies,available});
             }
             rs.close();
             pst.close();
