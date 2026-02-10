@@ -27,40 +27,52 @@ public class LibraryDAO {
         return copies;
     }
     public boolean issueBook(int bookId, int studentId) {
+    Connection con = null;
     try {
-        Connection con = DBConnection.getConnection();
+        con = DBConnection.getConnection();
+        con.setAutoCommit(false);
 
-        // Step 1: check availability
-        if (getAvailableCopies(bookId) <= 0) {
+        // Step 1: decrease available copies only if > 0
+        String updateBook =
+            "UPDATE bookstable " +
+            "SET AVAILABLE_COPIES = AVAILABLE_COPIES - 1 " +
+            "WHERE BOOK_ID = ? AND AVAILABLE_COPIES > 0";
+
+        PreparedStatement ps1 = con.prepareStatement(updateBook);
+        ps1.setInt(1, bookId);
+
+        int rows = ps1.executeUpdate();
+        if (rows == 0) {
+            con.rollback();
             return false;
         }
 
         // Step 2: insert issue record
         String issueSql =
-            "INSERT INTO Issued_Books (BOOK_ID, STUDENT_ID, ISSUE_DATE, STATUS) " +
-            "VALUES (?, ?, CURDATE(), 'ISSUED')";
+            "INSERT INTO issued_books (BOOK_ID, STUDENT_ID, ISSUE_DATE) " +
+            "VALUES (?, ?, CURDATE())";
 
-        PreparedStatement ps1 = con.prepareStatement(issueSql);
-        ps1.setInt(1, bookId);
-        ps1.setInt(2, studentId);
-        ps1.executeUpdate();
-
-        // Step 3: decrease available copies
-        String updateSql =
-            "UPDATE bookstable SET AVAILABLE_COPIES = AVAILABLE_COPIES - 1 " +
-            "WHERE BOOK_ID = ?";
-
-        PreparedStatement ps2 = con.prepareStatement(updateSql);
+        PreparedStatement ps2 = con.prepareStatement(issueSql);
         ps2.setInt(1, bookId);
+        ps2.setInt(2, studentId);
         ps2.executeUpdate();
 
+        con.commit();
         return true;
 
     } catch (Exception e) {
+        try {
+            if (con != null) con.rollback();
+        } catch (Exception ex) {}
         e.printStackTrace();
+    } finally {
+        try {
+            if (con != null) con.setAutoCommit(true);
+        } catch (Exception e) {}
     }
     return false;
 }
+
 
     public boolean reserveBook(int bookId, int studentId) {
     try {
@@ -106,4 +118,31 @@ public boolean returnBook(int bookId) {
         return false;
     }
     }
+public boolean addBook(int bookId, String category, String name, String author, int copies) {
+    try {
+        Connection con = DBConnection.getConnection();
+
+        String sql =
+            "INSERT INTO bookstable (BOOK_ID, CATEGORY, NAME, AUTHOR, COPIES, AVAILABLE_COPIES) " +
+            "VALUES (?, ?, ?, ?, ?, ?)";
+
+        PreparedStatement pst = con.prepareStatement(sql);
+        pst.setInt(1, bookId);
+        pst.setString(2, category);
+        pst.setString(3, name);
+        pst.setString(4, author);
+        pst.setInt(5, copies);
+        pst.setInt(6, copies); // initially available = total copies
+
+        int rows = pst.executeUpdate();
+        pst.close();
+
+        return rows > 0;
+
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    return false;
+}
+
 }

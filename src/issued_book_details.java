@@ -1,3 +1,11 @@
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+import java.util.Date;
+
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
@@ -7,16 +15,14 @@
  *
  * @author pc
  */
-import javax.swing.JOptionPane;
-
-public class return_page extends javax.swing.JFrame {
+public class issued_book_details extends javax.swing.JFrame {
     
-    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(return_page.class.getName());
+    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(issued_book_details.class.getName());
 
     /**
-     * Creates new form return_page
+     * Creates new form issued_book_details
      */
-    public return_page() {
+    public issued_book_details() {
         initComponents();
     }
 
@@ -29,21 +35,24 @@ public class return_page extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jLabel1 = new javax.swing.JLabel();
-        jLabel2 = new javax.swing.JLabel();
-        txtBookId = new javax.swing.JTextField();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        jTable1 = new javax.swing.JTable();
         jButton1 = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
-        jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel1.setText("BOOKS RETURN ");
+        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
 
-        jLabel2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel2.setText("BOOK ID");
+            },
+            new String [] {
+                "ISSUE_ID", "BOOK_ID", "STUDENT_ID", "ISSUE_DATE", "RETURN_DATE"
+            }
+        ));
+        jScrollPane1.setViewportView(jTable1);
 
-        jButton1.setText("RETURN");
+        jButton1.setText("FETCH");
         jButton1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton1ActionPerformed(evt);
@@ -61,37 +70,23 @@ public class return_page extends javax.swing.JFrame {
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(89, 89, 89)
-                        .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 217, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(36, 36, 36)
-                        .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 73, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(30, 30, 30)
-                        .addComponent(txtBookId, javax.swing.GroupLayout.PREFERRED_SIZE, 238, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(89, 89, 89)
-                        .addComponent(jButton1)
-                        .addGap(74, 74, 74)
-                        .addComponent(jButton2)))
-                .addContainerGap(23, Short.MAX_VALUE))
+                .addGap(104, 104, 104)
+                .addComponent(jButton1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 110, Short.MAX_VALUE)
+                .addComponent(jButton2)
+                .addGap(89, 89, 89))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(20, 20, 20)
-                .addComponent(jLabel1)
-                .addGap(38, 38, 38)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel2)
-                    .addComponent(txtBookId, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 90, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 266, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jButton1)
                     .addComponent(jButton2))
-                .addGap(91, 91, 91))
+                .addContainerGap())
         );
 
         pack();
@@ -99,30 +94,37 @@ public class return_page extends javax.swing.JFrame {
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         // TODO add your handling code here:
-        if (txtBookId.getText().isEmpty()) {
-        JOptionPane.showMessageDialog(this, "Enter Book ID");
-        return;
+        DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
+model.setRowCount(0); // clear old rows
+
+try {
+    Connection conn = DBConnection.getConnection();
+    String query = "SELECT * FROM issued_books";
+    PreparedStatement pst = conn.prepareStatement(query);
+    ResultSet rs = pst.executeQuery();
+
+    while (rs.next()) {
+        int issueId = rs.getInt("ISSUE_ID");
+        int bookId = rs.getInt("BOOK_ID");
+        int studentId = rs.getInt("STUDENT_ID");
+        Date issueDate = rs.getDate("ISSUE_DATE");
+        Date returnDate = rs.getDate("RETURN_DATE");
+
+        model.addRow(new Object[]{
+            issueId,
+            bookId,
+            studentId,
+            issueDate,
+            returnDate,
+        });
     }
 
-    int bookId;
+    rs.close();
+    pst.close();
 
-    try {
-        bookId = Integer.parseInt(txtBookId.getText());
-    } catch (NumberFormatException e) {
-        JOptionPane.showMessageDialog(this, "Invalid Book ID");
-        return;
-    }
-
-    LibraryDAO dao = new LibraryDAO();
-    boolean success = dao.returnBook(bookId);
-
-    if (success) {
-        JOptionPane.showMessageDialog(this, "Book returned successfully");
-        txtBookId.setText("");
-    } else {
-        JOptionPane.showMessageDialog(this, "Book ID not found");
-    }
-        
+} catch (Exception e) {
+    JOptionPane.showMessageDialog(this, e.getMessage());
+}
 
     }//GEN-LAST:event_jButton1ActionPerformed
 
@@ -153,14 +155,13 @@ public class return_page extends javax.swing.JFrame {
         //</editor-fold>
 
         /* Create and display the form */
-        java.awt.EventQueue.invokeLater(() -> new return_page().setVisible(true));
+        java.awt.EventQueue.invokeLater(() -> new issued_book_details().setVisible(true));
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JTextField txtBookId;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JTable jTable1;
     // End of variables declaration//GEN-END:variables
 }
