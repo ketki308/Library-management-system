@@ -32,6 +32,18 @@ public class LibraryDAO {
         con = DBConnection.getConnection();
         con.setAutoCommit(false);
 
+        // Validate student
+        String checkStudent =
+            "SELECT USER_ID FROM users WHERE USER_ID=? AND ROLE='STUDENT'";
+        PreparedStatement psCheck = con.prepareStatement(checkStudent);
+        psCheck.setInt(1, studentId);
+        ResultSet rs = psCheck.executeQuery();
+
+        if (!rs.next()) {
+            con.rollback();
+            return false;
+        }
+        
         // Step 1: decrease available copies only if > 0
         String updateBook =
             "UPDATE bookstable " +
@@ -99,50 +111,91 @@ public class LibraryDAO {
     }
     return false;
 }
-public boolean returnBook(int bookId) {
+public boolean returnBook(int bookId, int studentId) {
+    Connection con=null;
     try {
-        Connection con = DBConnection.getConnection();
+        con = DBConnection.getConnection();
+        con.setAutoCommit(false);
+        
+        String checkStudent =
+            "SELECT USER_ID FROM users WHERE USER_ID=? AND ROLE='STUDENT'";
+        PreparedStatement psCheck = con.prepareStatement(checkStudent);
+        psCheck.setInt(1, studentId);
+        ResultSet rs = psCheck.executeQuery();
 
-        String sql =
-            "UPDATE bookstable " +
-            "SET AVAILABLE_COPIES = AVAILABLE_COPIES + 1 " +
-            "WHERE BOOK_ID = ?";
+        if (!rs.next()) {
+            con.rollback();
+            return false;
+        }
+        
+        // 2️⃣ Check if this student actually issued this book
+        String checkIssue =
+            "SELECT ISSUE_ID FROM issued_books " +
+            "WHERE BOOK_ID=? AND STUDENT_ID=? AND RETURN_DATE IS NULL";
 
-        PreparedStatement ps = con.prepareStatement(sql);
-        ps.setInt(1, bookId);
+        PreparedStatement psCheckIssue = con.prepareStatement(checkIssue);
+        psCheckIssue.setInt(1, bookId);
+        psCheckIssue.setInt(2, studentId);
 
-        return ps.executeUpdate() > 0;
+        ResultSet rsIssue = psCheckIssue.executeQuery();
 
+        if (!rsIssue.next()) {
+            con.rollback(); // student never had this book
+            return false;
+        }
+        
+         // 3️⃣ Mark book as returned
+        String updateReturn =
+            "UPDATE issued_books SET RETURN_DATE = CURDATE() " +
+            "WHERE BOOK_ID=? AND STUDENT_ID=? AND RETURN_DATE IS NULL";
+
+        PreparedStatement psReturn = con.prepareStatement(updateReturn);
+        psReturn.setInt(1, bookId);
+        psReturn.setInt(2, studentId);
+        psReturn.executeUpdate();
+
+        // 4️⃣ Increase available copies (NOW it is valid)
+        String updateCopies =
+            "UPDATE bookstable SET AVAILABLE_COPIES = AVAILABLE_COPIES + 1 " +
+            "WHERE BOOK_ID=?";
+
+        PreparedStatement psCopies = con.prepareStatement(updateCopies);
+        psCopies.setInt(1, bookId);
+        psCopies.executeUpdate();
+
+        con.commit();
+        return true;
+
+    
     } catch (Exception e) {
+        try { if (con != null) con.rollback(); } catch (Exception ex) {}
         e.printStackTrace();
-        return false;
+    } finally {
+        try { if (con != null) con.setAutoCommit(true); } catch (Exception e) {}
     }
-    }
-public boolean addBook(int bookId, String category, String name, String author, int copies) {
+
+    return false;
+}
+public boolean addBook(String category, String name, String author, int copies,int available) {
     try {
         Connection con = DBConnection.getConnection();
 
         String sql =
-            "INSERT INTO bookstable (BOOK_ID, CATEGORY, NAME, AUTHOR, COPIES, AVAILABLE_COPIES) " +
-            "VALUES (?, ?, ?, ?, ?, ?)";
+            "INSERT INTO bookstable (CATEGORY, NAME, AUTHOR, TOTAL_COPIES, AVAILABLE_COPIES) " +
+            "VALUES (?, ?, ?, ?, ?)";
 
         PreparedStatement pst = con.prepareStatement(sql);
-        pst.setInt(1, bookId);
-        pst.setString(2, category);
-        pst.setString(3, name);
-        pst.setString(4, author);
+        pst.setString(1, category);
+        pst.setString(2, name);
+        pst.setString(3, author);
+        pst.setInt(4, copies);
         pst.setInt(5, copies);
-        pst.setInt(6, copies); // initially available = total copies
 
-        int rows = pst.executeUpdate();
-        pst.close();
-
-        return rows > 0;
+        return pst.executeUpdate() > 0;
 
     } catch (Exception e) {
         e.printStackTrace();
     }
     return false;
 }
-
 }

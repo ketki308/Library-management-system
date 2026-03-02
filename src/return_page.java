@@ -34,6 +34,8 @@ public class return_page extends javax.swing.JFrame {
         txtBookId = new javax.swing.JTextField();
         jButton1 = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
+        jLabel3 = new javax.swing.JLabel();
+        studentID = new javax.swing.JTextField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -57,6 +59,8 @@ public class return_page extends javax.swing.JFrame {
             }
         });
 
+        jLabel3.setText("STUDENT ID");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -75,7 +79,12 @@ public class return_page extends javax.swing.JFrame {
                         .addGap(89, 89, 89)
                         .addComponent(jButton1)
                         .addGap(74, 74, 74)
-                        .addComponent(jButton2)))
+                        .addComponent(jButton2))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(46, 46, 46)
+                        .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(studentID, javax.swing.GroupLayout.PREFERRED_SIZE, 238, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap(23, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -87,7 +96,11 @@ public class return_page extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel2)
                     .addComponent(txtBookId, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 90, Short.MAX_VALUE)
+                .addGap(27, 27, 27)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel3)
+                    .addComponent(studentID, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 41, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jButton1)
                     .addComponent(jButton2))
@@ -103,24 +116,35 @@ public class return_page extends javax.swing.JFrame {
         JOptionPane.showMessageDialog(this, "Enter Book ID");
         return;
     }
+        if (studentID.getText().isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Enter student ID");
+        return;
+    }
 
     int bookId;
-
+    int studentId;
+    
     try {
         bookId = Integer.parseInt(txtBookId.getText());
     } catch (NumberFormatException e) {
         JOptionPane.showMessageDialog(this, "Invalid Book ID");
         return;
     }
+    try {
+        studentId = Integer.parseInt(studentID.getText());
+    } catch (NumberFormatException e) {
+        JOptionPane.showMessageDialog(this, "Invalid student ID");
+        return;
+    }
 
     LibraryDAO dao = new LibraryDAO();
-    boolean success = dao.returnBook(bookId);
+    boolean success = dao.returnBook(bookId,studentId);
 
     if (success) {
         JOptionPane.showMessageDialog(this, "Book returned successfully");
         txtBookId.setText("");
     } else {
-        JOptionPane.showMessageDialog(this, "Book ID not found");
+        JOptionPane.showMessageDialog(this, "Book OR Student ID not found");
     }
         
 
@@ -161,6 +185,8 @@ public class return_page extends javax.swing.JFrame {
     private javax.swing.JButton jButton2;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JTextField studentID;
     private javax.swing.JTextField txtBookId;
     // End of variables declaration//GEN-END:variables
 }

@@ -127,7 +127,7 @@ public class LoginPageStudent extends javax.swing.JFrame {
 try {
     Connection conn = DBConnection.getConnection();
 
-    String query = "SELECT PASSWORD FROM admin WHERE USER_ID = ?";
+    String query = "SELECT PASSWORD FROM users WHERE USERNAME = ? AND ROLE='STUDENT'";
     PreparedStatement pst = conn.prepareStatement(query);
     pst.setString(1, username);
 
